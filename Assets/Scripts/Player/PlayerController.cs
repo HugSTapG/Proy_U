@@ -5,15 +5,16 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement Variables")]
     public float playerJumpForce = 20f;
-    public float playerSpeedStored;
     public float playerSpeed = 5f;
+    public float playerSpeedStored;
     private bool isFacing = true;
     private bool isWalking = true;
+    private bool isChangingDir = false;
     private Vector3 respawnPoint;
-    private float horizontal;//Eliminar
     [Header("Animation")]
     public Sprite[] movingSprites;
     public Sprite[] jumpingSprites;
+    public Sprite[] changingSprites;
     public Sprite deadSprite;
     private int index = 0;
     [Header("Components and Layers")]
@@ -39,16 +40,20 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         //No hacer nada si esta atacando, voltear si toca un muro/isla mientras ataca
+        // Si esta cambiando de dir no voltea
         if(playerAttack.IsAttacking())
         {
-            if (OnWall() || OnIsland("Island"))
+            if (!isChangingDir && (OnWall() || OnIsland("Island")))
             {
                 FlipLogic();
             }
             return;
         }
-        //Input Horizontal(Eliminar)
-        horizontal = Input.GetAxisRaw("Horizontal");
+        //Cambio de Direccion
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            Change();
+        }
         //Mov constante segun velocidad
         body.velocity = new Vector2(playerSpeed, body.velocity.y);
         //Salto
@@ -66,14 +71,21 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(playerAttack.Attack());
         }
-
-        Flip();
     }
     //Salto - Metodo
     private void Jump()
     {
         body.velocity = new Vector2(body.velocity.x, playerJumpForce);
         StartCoroutine(JumpCoRoutine());
+    }
+    //Cambio de direccion
+    private void Change()
+    {
+        if (isChangingDir)
+        {
+            return;
+        }
+        StartCoroutine(ChangeCoRoutine());
     }
     //Detectar Piso
     private bool IsGrounded()
@@ -101,21 +113,14 @@ public class PlayerController : MonoBehaviour
         }
         return false;
     }
-    //Voltear (Eliminar input horizontal despues)
-    private void Flip()
-    {
-        if(isFacing && horizontal < 0f || !isFacing && horizontal > 0f)
-        {
-            FlipLogic();
-        }
-    }
+    //Voltear
     private void FlipLogic()
     {
-            isFacing = !isFacing;
-             Vector2 localScale = transform.localScale;
-             localScale.x *= -1f;
-             playerSpeed *= -1f;
-             transform.localScale = localScale;
+        isFacing = !isFacing;
+        Vector2 localScale = transform.localScale;
+        localScale.x *= -1f;
+        playerSpeed *= -1f;
+        transform.localScale = localScale;
     }
     //Colisiones
     void OnTriggerEnter2D(Collider2D collision)
@@ -177,6 +182,7 @@ public class PlayerController : MonoBehaviour
     //Animacion de Movimiento
     IEnumerator WalkCoRoutine()
     {
+        //Mientras la variable de camianta este activa el arreglo de sprites entra en loop
         while (isWalking)
         {
             yield return new WaitForSeconds(0.05f);
@@ -190,18 +196,33 @@ public class PlayerController : MonoBehaviour
     }
     IEnumerator JumpCoRoutine()
     {
-    // Temporarily stop walking animation
+    //Detiene animacion de caminata
     isWalking = false;
-
-    // Loop through jumping sprites
+    //Loop del arreglo de sprites
     foreach (Sprite jumpSprite in jumpingSprites)
     {
         spriteR.sprite = jumpSprite;
-        yield return new WaitForSeconds(0.1618033988f); // Adjust the delay as needed
+        yield return new WaitForSeconds(0.1618033988f);
     }
-
-    // Restart walking animation
+    //Resetea la animacion de caminata
     isWalking = true;
     StartCoroutine(WalkCoRoutine());
+    }
+    IEnumerator ChangeCoRoutine()
+    {
+        isChangingDir = true;
+        isWalking = false;
+        FlipLogic();
+        float cplayerSpeed = playerSpeed;
+        playerSpeed = 0f;
+        foreach (Sprite changeSprite in changingSprites)
+        {
+            spriteR.sprite = changeSprite;
+            yield return new WaitForSeconds(0.1618033988f);
+        }
+        playerSpeed = cplayerSpeed;
+        isWalking = true;
+        StartCoroutine(WalkCoRoutine());
+        isChangingDir = false;
     }
 }

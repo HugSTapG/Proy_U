@@ -25,6 +25,12 @@ public class PlayerController : MonoBehaviour
     private PlayerAttack playerAttack;
     private BoxCollider2D boxC;
     private SpriteRenderer spriteR;
+    [Header("Audio")]
+    [SerializeField]private AudioClip attackSound;
+    [SerializeField]private AudioClip jumpSound;
+    [SerializeField]private AudioClip changeSound;
+    [SerializeField]private AudioClip coinSound;
+    [SerializeField]private AudioClip badSound;
 
     void Start()
     {
@@ -69,12 +75,14 @@ public class PlayerController : MonoBehaviour
         //Atacar
         if(Input.GetKeyDown(KeyCode.E) && playerAttack.CanAttack())
         {
+            SoundManager.instance.PlaySound(attackSound);
             StartCoroutine(playerAttack.Attack());
         }
     }
     //Salto - Metodo
     private void Jump()
     {
+        SoundManager.instance.PlaySound(jumpSound);
         body.velocity = new Vector2(body.velocity.x, playerJumpForce);
         StartCoroutine(JumpCoRoutine());
     }
@@ -85,6 +93,7 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
+        SoundManager.instance.PlaySound(changeSound);
         StartCoroutine(ChangeCoRoutine());
     }
     //Detectar Piso
@@ -129,6 +138,7 @@ public class PlayerController : MonoBehaviour
         {
             case "ItemG":
                 Destroy(collision.gameObject);
+                SoundManager.instance.PlaySound(coinSound);
                 cm.AddCoins();
                 if(cm.coinCount % 10 == 0)
                 {
@@ -138,6 +148,7 @@ public class PlayerController : MonoBehaviour
                 break;
             case "ItemB":
                 Destroy(collision.gameObject);
+                SoundManager.instance.PlaySound(badSound);
                 if (cm.GetCoins() == 0 && !playerAttack.IsDebuffed())
                 {
                     playerAttack.AttackDebuff(1f);

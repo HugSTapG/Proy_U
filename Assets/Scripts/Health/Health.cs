@@ -15,6 +15,9 @@ public class Health : MonoBehaviour
     [SerializeField]private Behaviour[] components;
     private UIManager uiManager;
     private bool invulnerab;
+    [Header("Audio")]
+    [SerializeField]private AudioClip deathSound;
+    [SerializeField]private AudioClip hurtSound;
 
     private void Awake()
     {
@@ -44,6 +47,7 @@ public class Health : MonoBehaviour
         0, startingHealth);
         if( currentHealth > 0)
         {
+            SoundManager.instance.PlaySound(hurtSound);
             //Cambia color por x tiempo/veces, invulnerabilidad
             StartCoroutine(Hurt());
         }
@@ -51,6 +55,7 @@ public class Health : MonoBehaviour
         {
             if(!dead)
             {
+                SoundManager.instance.PlaySound(deathSound);
                 //Muerte General
                 foreach(Behaviour component in components)
                 {
